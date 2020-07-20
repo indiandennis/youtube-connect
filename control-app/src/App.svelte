@@ -9,8 +9,25 @@
   $: if (urlToken != "" || stringToken != "") {
     console.log("running fetch");
     var token = urlToken != "" ? urlToken : stringToken;
-    fetch("localhost:8080/get/" + token)
-      .then(utils.handleGetResponse)
+    console.log(token);
+    fetch("http://35.235.116.233/get/" + token)
+      .then(response => {
+        if (response.status !== 200) {
+          connected = false;
+          state = {};
+          console.log(
+            "Looks like there was a problem. Status Code: " + response.status
+          );
+          return;
+        }
+
+        // Examine the text in the response
+        response.json().then(data => {
+          state = data;
+
+          connected = true;
+        });
+      })
       .catch(err => {
         connected = false;
         state = {};
@@ -31,6 +48,10 @@
       processMnemonic();
     }
   };
+
+  const updateHashToken = () => {
+    urlToken = window.location.hash.substr(1);
+  };
 </script>
 
 <style>
@@ -41,7 +62,8 @@
   }
 </style>
 
-<svelte:window on:keydown={handleKeydown} />
+<svelte:window on:keydown={handleKeydown} on:hashchange={updateHashToken} />
+
 <main>
   <p>{urlToken}</p>
   <p>{stringToken}</p>

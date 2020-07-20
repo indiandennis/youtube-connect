@@ -8,6 +8,7 @@ import (
 	"runtime"
 
 	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/autotls"
 	"github.com/gin-gonic/gin"
 )
 
@@ -27,7 +28,8 @@ func main() {
 	r.GET("/subscribe/:token", subscribeEvents)
 	r.PUT("/update/:token", updateToken)
 	r.DELETE("/delete/:token", deleteToken)
-	r.Run(":80")
+	//r.Run(":80")
+	log.Fatal(autotls.Run(r, "api.youtubeconnect.ameyathakur.com"))
 
 }
 
