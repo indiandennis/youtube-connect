@@ -10,6 +10,7 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/autotls"
 	"github.com/gin-gonic/gin"
+	"golang.org/x/crypto/acme/autocert"
 )
 
 var tokenManager *Manager
@@ -29,7 +30,13 @@ func main() {
 	r.PUT("/update/:token", updateToken)
 	r.DELETE("/delete/:token", deleteToken)
 	//r.Run(":80")
-	log.Fatal(autotls.Run(r, "api.youtubeconnect.ameyathakur.com"))
+	m := autocert.Manager{
+		Prompt:     autocert.AcceptTOS,
+		HostPolicy: autocert.HostWhitelist("api.youtubeconnect.ameyathakur.com"),
+		Cache:      autocert.DirCache("/var/www/.cache"),
+	}
+
+	log.Fatal(autotls.RunWithManager(r, &m))
 
 }
 
