@@ -1,0 +1,22 @@
+{
+  "manifest_version": 2,
+  "name": "Youtube Connect",
+  "version": "0.1.0",
+  "description": "Control Youtube with other devices.",
+  "icons": {
+    "48": "icons/icon.png",
+    "96": "icons/icon@2x.png"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://*.youtube.com/*"],
+      "js": ["browser-polyfill.min.js", "wordlist.js", "ytconnect.js"]
+    }
+  ],
+  "web_accessible_resources": [
+  ],
+  "permissions": [
+    "storage",
+    "*://localhost/*"
+  ]
+}
