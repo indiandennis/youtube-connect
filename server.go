@@ -17,7 +17,7 @@ func main() {
 	nuCPU := runtime.NumCPU()
 	runtime.GOMAXPROCS(nuCPU)
 
-	gin.SetMode(gin.ReleaseMode)
+	//gin.SetMode(gin.ReleaseMode)
 	tokenManager = NewManager()
 	r := gin.Default()
 	r.Use(cors.Default())
