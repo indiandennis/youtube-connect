@@ -17,7 +17,7 @@ func main() {
 	nuCPU := runtime.NumCPU()
 	runtime.GOMAXPROCS(nuCPU)
 
-	//gin.SetMode(gin.ReleaseMode)
+	gin.SetMode(gin.ReleaseMode)
 	tokenManager = NewManager()
 	r := gin.Default()
 	r.Use(cors.Default())
@@ -27,7 +27,7 @@ func main() {
 	r.GET("/subscribe/:token", subscribeEvents)
 	r.PUT("/update/:token", updateToken)
 	r.DELETE("/delete/:token", deleteToken)
-	r.Run()
+	r.Run(":80")
 
 }
 
