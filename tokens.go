@@ -7,11 +7,11 @@ import (
 )
 
 type State struct {
-	Url    string `json:"url"`
-	Paused bool   `json:"paused"`
-	Volume int    `json:"volume"`
-	Time   int    `json:"time"`
-	Action int    `json:"action"`
+	Url    string  `json:"url"`
+	Paused bool    `json:"paused"`
+	Volume float32 `json:"volume"`
+	Time   float32 `json:"time"`
+	Action int     `json:"action"`
 }
 
 type Listener struct {

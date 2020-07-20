@@ -13,10 +13,6 @@
       "js": ["browser-polyfill.min.js", "wordlist.js", "ytconnect.js"]
     }
   ],
-  "web_accessible_resources": [
-  ],
-  "permissions": [
-    "storage",
-    "*://localhost/*"
-  ]
+  "web_accessible_resources": [],
+  "permissions": ["storage", "https://api.youtubeconnect.ameyathakur.com/*"]
 }

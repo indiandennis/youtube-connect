@@ -10,11 +10,12 @@
     console.log("running fetch");
     var token = urlToken != "" ? urlToken : stringToken;
     console.log(token);
-    fetch("http://35.235.116.233/get/" + token)
+    fetch("https://api.youtubeconnect.ameyathakur.com/get/" + token)
       .then(response => {
         if (response.status !== 200) {
           connected = false;
           state = {};
+          if (urlToken != "") urlToken = "";
           console.log(
             "Looks like there was a problem. Status Code: " + response.status
           );
@@ -24,7 +25,6 @@
         // Examine the text in the response
         response.json().then(data => {
           state = data;
-
           connected = true;
         });
       })
@@ -67,8 +67,11 @@
 <main>
   <p>{urlToken}</p>
   <p>{stringToken}</p>
-  <p>{state}</p>
+  <p>{connected}</p>
   <input bind:value={mnemonicBuffer} />
   <button on:click={processMnemonic}>Connect</button>
+  <br />
+  <button on:click={playpause}>Play/Pause</button>
+  <input type="range" bind:value={state.volume} min="0" max="100" />
 
 </main>

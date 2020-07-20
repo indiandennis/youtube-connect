@@ -1,4 +1,4 @@
-const baseAPIdomain = 'http://localhost:8080';
+const baseAPIdomain = 'https://api.youtubeconnect.ameyathakur.com';
 const controlurl = 'http://google.com/';
 
 injected = false; //no storage
@@ -96,6 +96,17 @@ function newToken() {
       // Examine the text in the response
       response.json().then((data) => {
         tokenState.base64token = data;
+        video = document.querySelector('.video-stream');
+        var localstate = {
+          url: '',
+          paused: video.paused,
+          volume: video.volume * 100,
+          time: 0,
+          action: -1,
+        };
+
+        console.log(localstate);
+
         eventsource = new EventSource(
           baseAPIdomain + '/subscribe/' + tokenState.base64token
         );
