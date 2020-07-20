@@ -1,21 +1,25 @@
 <script>
   import * as utils from "./utils.js";
+  const api = "https://api.youtubeconnect.ameyathakur.com";
   let connected = false;
-  let state = {};
+  let state;
   let mnemonicBuffer = "";
-  let urlToken = window.location.hash.substr(1);
-  let stringToken = "";
+  let token = window.location.hash.substr(1);
+  let timer;
 
-  $: if (urlToken != "" || stringToken != "") {
+  $: if (state) {
+    debounce(pushUpdate, 15);
+  }
+
+  $: if (token !== "") {
     console.log("running fetch");
-    var token = urlToken != "" ? urlToken : stringToken;
     console.log(token);
-    fetch("https://api.youtubeconnect.ameyathakur.com/get/" + token)
+    fetch(api + "/get/" + token)
       .then(response => {
         if (response.status !== 200) {
           connected = false;
-          state = {};
-          if (urlToken != "") urlToken = "";
+          state = null;
+          token = "";
           console.log(
             "Looks like there was a problem. Status Code: " + response.status
           );
@@ -30,16 +34,44 @@
       })
       .catch(err => {
         connected = false;
-        state = {};
+        state = null;
         console.log("Fetch Error : ", err);
         return;
       });
   }
 
+  const pushUpdate = () => {
+    fetch(api + "/update/" + token, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(state)
+    })
+      .then(response => {
+        if (response.status !== 200) {
+          connected = false;
+          state = null;
+          token = "";
+          console.log(
+            "Looks like there was a problem. Status Code: " + response.status
+          );
+          return;
+        }
+      })
+      .catch(err => {
+        connected = false;
+        state = null;
+        token = "";
+        console.log("Fetch Error : ", err);
+        return;
+      });
+  };
+
   const processMnemonic = () => {
     var b64 = utils.demnemonic(mnemonicBuffer);
     if (b64 != "") {
-      stringToken = b64;
+      token = b64;
     }
   };
 
@@ -50,7 +82,18 @@
   };
 
   const updateHashToken = () => {
-    urlToken = window.location.hash.substr(1);
+    token = window.location.hash.substr(1);
+  };
+
+  const playpause = () => {
+    state.paused === true ? (state.paused = false) : (state.paused = true);
+  };
+
+  const debounce = (func, delay) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      func();
+    }, delay);
   };
 </script>
 
@@ -65,13 +108,15 @@
 <svelte:window on:keydown={handleKeydown} on:hashchange={updateHashToken} />
 
 <main>
-  <p>{urlToken}</p>
-  <p>{stringToken}</p>
+  <p>{token}</p>
   <p>{connected}</p>
   <input bind:value={mnemonicBuffer} />
   <button on:click={processMnemonic}>Connect</button>
   <br />
-  <button on:click={playpause}>Play/Pause</button>
-  <input type="range" bind:value={state.volume} min="0" max="100" />
+
+  {#if state}
+    <button on:click={playpause}>Play/Pause</button>
+    <input type="range" bind:value={state.volume} min="0" max="100" />
+  {/if}
 
 </main>

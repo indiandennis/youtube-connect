@@ -12,6 +12,7 @@ type State struct {
 	Volume float32 `json:"volume"`
 	Time   float32 `json:"time"`
 	Action int     `json:"action"`
+	Mute   bool    `json:"mute"`
 }
 
 type Listener struct {

@@ -10,9 +10,9 @@
   "content_scripts": [
     {
       "matches": ["*://*.youtube.com/*"],
-      "js": ["browser-polyfill.min.js", "wordlist.js", "ytconnect.js"]
+      "js": ["browser-polyfill.min.js", "wordlist.js", "ytconnect.js"],
+      "css": ["styles.css"]
     }
   ],
-  "web_accessible_resources": [],
   "permissions": ["storage", "https://api.youtubeconnect.ameyathakur.com/*"]
 }

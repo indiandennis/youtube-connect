@@ -97,15 +97,7 @@ function newToken() {
       response.json().then((data) => {
         tokenState.base64token = data;
         video = document.querySelector('.video-stream');
-        var localstate = {
-          url: '',
-          paused: video.paused,
-          volume: video.volume * 100,
-          time: 0,
-          action: -1,
-        };
-
-        console.log(localstate);
+        pushLocalStateUpdate();
 
         eventsource = new EventSource(
           baseAPIdomain + '/subscribe/' + tokenState.base64token
@@ -148,21 +140,16 @@ function deleteToken() {
         );
         return;
       }
-
-      // Examine the text in the response
-      response.text().then((data) => {
-        tokenState.base64token = '';
-        tokenState.tokenString = '';
-        tokenState.ytconnect_enabled = false;
-        rerenderInfo();
-        storeTokenState();
-      });
     })
     .catch((err) => {
       rerenderInfo();
       console.log('Fetch Error : ', err);
-      return;
     });
+  tokenState.base64token = '';
+  tokenState.tokenString = '';
+  tokenState.ytconnect_enabled = false;
+  rerenderInfo();
+  storeTokenState();
 }
 
 function storeTokenState() {
@@ -188,28 +175,13 @@ function rerenderInfo() {
       'https://chart.googleapis.com/chart?cht=qr&chs=128x128&chl=' +
       controlurl +
       tokenState.base64token;
-    ytconnectQRcodeContainer.setAttribute(
-      'style',
-      'width: 100%; padding: 8px 61px;'
-    );
-    ytconnectTokenString.setAttribute(
-      'style',
-      'display: block; margin-left: auto; margin-right: auto; width: 200px; border-radius: 2px; padding-bottom: 8px; font-size: 100%; font-weight: 700; font-family: Roboto Mono, Arial Mono; text-shadow: none;  text-align: center; '
-    );
-    ytconnectRemoteLink.setAttribute('style', 'width: 100%; display: table;');
+    ytconnectQRcodeContainer.removeAttribute('style');
+    ytconnectTokenString.removeAttribute('style');
+    ytconnectRemoteLink.removeAttribute('style');
   } else {
-    ytconnectQRcodeContainer.setAttribute(
-      'style',
-      'width: 100%; padding: 8px 61px; display: none;'
-    );
-    ytconnectTokenString.setAttribute(
-      'style',
-      'margin-left: auto; margin-right: auto; width: 200px; border-radius: 2px; padding-bottom: 8px; font-size: 100%; font-weight: 700; font-family: Roboto Mono, Arial Mono; text-shadow: none;  text-align: center; display: none;'
-    );
-    ytconnectRemoteLink.setAttribute(
-      'style',
-      'width: 100%; display: table; display: none'
-    );
+    ytconnectQRcodeContainer.setAttribute('style', 'display: none;');
+    ytconnectTokenString.setAttribute('style', 'display: none;');
+    ytconnectRemoteLink.setAttribute('style', 'display: none');
   }
   ytconnectEnableSetting.setAttribute(
     'aria-checked',
@@ -243,10 +215,7 @@ function disableYTconnect() {
 
 function openSettingsPanel() {
   ytconnect_settings_open = true;
-  ytconnectSettingsPanel.setAttribute(
-    'style',
-    'width: 251px; will-change: width,height; right: 48px; bottom: 49px; z-index: 71; padding: 8px 0;'
-  );
+  ytconnectSettingsPanel.removeAttribute('style');
   button.removeEventListener('click', openSettingsPanel);
 
   document.addEventListener('click', detectOutsideClicks, true);
@@ -255,10 +224,7 @@ function openSettingsPanel() {
 
 function closeSettingsPanel() {
   ytconnect_settings_open = false;
-  ytconnectSettingsPanel.setAttribute(
-    'style',
-    'width: 251px; will-change: width,height; right: 48px; bottom: 49px; z-index: 71; padding: 8px 0; display: none;'
-  );
+  ytconnectSettingsPanel.setAttribute('style', 'display: none;');
   button.removeEventListener('click', closeSettingsPanel);
   document.removeEventListener('click', detectOutsideClicks, true);
   button.addEventListener('click', openSettingsPanel);
@@ -269,6 +235,39 @@ function detectOutsideClicks(e) {
     closeSettingsPanel();
     e.stopPropagation();
   }
+}
+
+function pushLocalStateUpdate() {
+  var video = document.querySelector('.video-stream');
+  var localstate = {
+    url: baseURI,
+    paused: video.paused,
+    volume: video.volume * 100,
+    time: -1,
+    action: -1,
+    mute: video.muted,
+  };
+
+  console.log(localstate);
+  fetch(baseAPIdomain + '/update/' + tokenState.base64token, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(localstate),
+  })
+    .then((response) => {
+      if (response.status !== 200) {
+        console.log(
+          'Looks like there was a problem. Status Code: ' + response.status
+        );
+        return;
+      }
+    })
+    .catch((err) => {
+      console.log('Fetch Error : ', err);
+      return;
+    });
 }
 
 function stateUpdateHandler(event) {
@@ -289,6 +288,11 @@ function stateUpdateHandler(event) {
         clamp(state.volume, 0, 100) +
         ')'
     );
+  }
+  if (state.muted) {
+    injectPageScript("document.getElementById('movie_player').mute()");
+  } else {
+    injectPageScript("document.getElementById('movie_player').unmute()");
   }
 
   switch (state.action) {
@@ -331,6 +335,13 @@ function injectPageScript(code) {
   script.remove();
 }
 
+function copyText(event) {
+  console.log(event.target);
+  event.target.select();
+  document.execCommand('copy');
+  //document.getSelection().removeAllRanges();
+}
+
 function injectYTConnect() {
   button = document.createElement('button');
   button.setAttribute('class', 'ytp-button ytp-connect-button');
@@ -348,11 +359,11 @@ function injectYTConnect() {
   //button.addEventListener('mouseover', showTooltip)
 
   ytconnectSettingsPanel = document.createElement('div');
-  ytconnectSettingsPanel.setAttribute('class', 'ytp-popup ytp-settings-menu');
   ytconnectSettingsPanel.setAttribute(
-    'style',
-    'width: 251px;  will-change: width,height; right: 48px; bottom: 49px; z-index: 71; padding: 8px 0; display: none;'
+    'class',
+    'ytconnect-settings-panel ytp-popup ytp-settings-menu'
   );
+  ytconnectSettingsPanel.setAttribute('style', 'display: none;');
 
   ytconnectEnableSetting = document.createElement('div');
   ytconnectEnableSetting.setAttribute('class', 'ytp-menuitem');
@@ -366,22 +377,15 @@ function injectYTConnect() {
     '<div class="ytp-menuitem-icon"></div><div class="ytp-menuitem-label">Youtube Connect</div><div class="ytp-menuitem-content"><div class="ytp-menuitem-toggle-checkbox"></div></div>';
 
   ytconnectQRcodeContainer = document.createElement('div');
-  if (tokenState.ytconnect_enabled) {
-    ytconnectQRcodeContainer.setAttribute(
-      'style',
-      'width: 100%; padding: 8px 61px; '
-    );
-  } else {
-    ytconnectQRcodeContainer.setAttribute(
-      'style',
-      'width: 100%; padding: 8px 61px; display: none;'
-    );
+  ytconnectQRcodeContainer.setAttribute('class', 'ytconnect-qrcode-container');
+  if (!tokenState.ytconnect_enabled) {
+    ytconnectQRcodeContainer.setAttribute('style', 'display: none;');
   }
 
   ytconnectQRcode = document.createElement('img');
   ytconnectQRcode.setAttribute(
     'style',
-    'filter: invert(90%); margin-left: auto; margin-right: auto; border-radius: 4px;'
+    'display: block; filter: invert(90%); margin-left: auto; margin-right: auto; border-radius: 4px;'
   );
   ytconnectQRcode.src =
     'https://chart.googleapis.com/chart?cht=qr&chs=128x128&chl=' +
@@ -390,34 +394,24 @@ function injectYTConnect() {
   ytconnectQRcode = ytconnectQRcodeContainer.appendChild(ytconnectQRcode);
 
   ytconnectRemoteLink = document.createElement('a');
-  ytconnectRemoteLink.setAttribute('class', 'ytp-menuitem');
+  ytconnectRemoteLink.setAttribute(
+    'class',
+    'ytconnect-remote-link ytp-menuitem'
+  );
   ytconnectRemoteLink.setAttribute('role', 'menuitemlink');
   ytconnectRemoteLink.setAttribute('href', controlurl);
   ytconnectRemoteLink.setAttribute('target', '_blank');
-  if (tokenState.ytconnect_enabled) {
-    ytconnectRemoteLink.setAttribute('style', 'width: 100%; display: table; ');
-  } else {
-    ytconnectRemoteLink.setAttribute(
-      'style',
-      'width: 100%; display: table; display: none;'
-    );
+  if (!tokenState.ytconnect_enabled) {
+    ytconnectRemoteLink.setAttribute('style', 'display: none;');
   }
   ytconnectRemoteLink.innerHTML =
     '<div class="ytp-menuitem-icon"></div><div class="ytp-menuitem-label">Remote Application</div><div class="ytp-menuitem-content"><div class="ytp-menuitem-link"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" width="24px" height="24px"><path d="M0 0h24v24H0z" fill="none"/><path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg></div></div>';
 
   ytconnectTokenString = document.createElement('div');
-  if (tokenState.ytconnect_enabled) {
-    ytconnectTokenString.setAttribute(
-      'style',
-      'display: block; margin-left: auto; margin-right: auto; border-radius: 2px; padding-bottom: 8px; font-size: 100%; font-weight: 700; font-family: Roboto Mono, Arial Mono; text-shadow: none;  text-align: center;'
-    );
-  } else {
-    ytconnectTokenString.setAttribute(
-      'style',
-      'display: block; margin-left: auto; margin-right: auto; border-radius: 2px; padding-bottom: 8px; font-size: 100%; font-weight: 700; font-family: Roboto Mono, Arial Mono; text-shadow: none;  text-align: center; display: none;'
-    );
+  ytconnectTokenString.setAttribute('class', 'ytconnect-token-string');
+  if (!tokenState.ytconnect_enabled) {
+    ytconnectTokenString.setAttribute('style', 'display: none;');
   }
-
   ytconnectTokenString.innerHTML = tokenState.tokenString;
 
   parentNode = document.getElementById('movie_player');
@@ -443,4 +437,22 @@ function injectYTConnect() {
   } else {
     ytconnectEnableSetting.addEventListener('click', enableYTconnect, true);
   }
+
+  if (document.querySelector('.video-stream')) {
+    pushLocalStateUpdate();
+  }
+
+  /* document.querySelector('.video-stream').addEventListener('play', () => {
+    pushLocalStateUpdate();
+  });
+
+  document.querySelector('.video-stream').addEventListener('pause', () => {
+    pushLocalStateUpdate();
+  });
+
+  document
+    .querySelector('.video-stream')
+    .addEventListener('volumechange', () => {
+      pushLocalStateUpdate();
+    }); */
 }
