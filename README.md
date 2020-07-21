@@ -1,0 +1,2 @@
+# youtube-connect
+WebExtension to control Youtube remotely. I built this in around a week of work, mostly because I hadn't built an extension before and had to figure out how to interact with Youtube. This is mostly functional, but please don't expect any active development or bug fixes. The API server may go down at some point, feel free to modify the extension and run the API server yourself if you wish. 
