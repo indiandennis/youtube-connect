@@ -66,6 +66,10 @@
         console.log("Fetch Error : ", err);
         return;
       });
+
+    if (state && state.action !== -1) {
+      state.action = -1;
+    }
   };
 
   const processMnemonic = () => {
@@ -89,6 +93,26 @@
     state.paused === true ? (state.paused = false) : (state.paused = true);
   };
 
+  const mute = () => {
+    state.mute === true ? (state.mute = false) : (state.mute = true);
+  };
+
+  const next = () => {
+    state.action = 1;
+  };
+
+  const prev = () => {
+    state.action = 0;
+  };
+
+  const skipbackward = () => {
+    state.action = 2;
+  };
+
+  const skipforward = () => {
+    state.action = 3;
+  };
+
   const debounce = (func, delay) => {
     clearTimeout(timer);
     timer = setTimeout(() => {
@@ -107,16 +131,43 @@
 
 <svelte:window on:keydown={handleKeydown} on:hashchange={updateHashToken} />
 
-<main>
-  <p>{token}</p>
-  <p>{connected}</p>
-  <input bind:value={mnemonicBuffer} />
-  <button on:click={processMnemonic}>Connect</button>
-  <br />
+<main class="container">
+  <div class="header">
+    <a href="https://youtubeconnect.ameyathakur.com/">Youtube Connect</a>
+    <a href="https://youtubeconnect.ameyathakur.com/">Extension</a>
+  </div>
+  <div style="height: 25vh" />
+  <div class="content">
+    {#if !connected}
+      <input
+        class="long-input"
+        bind:value={mnemonicBuffer}
+        type="text"
+        placeholder="Eight word mnemonic" />
+      <button on:click={processMnemonic}>Connect</button>
+    {/if}
 
-  {#if state}
-    <button on:click={playpause}>Play/Pause</button>
-    <input type="range" bind:value={state.volume} min="0" max="100" />
-  {/if}
+    {#if connected}
+      <div class="panel">
+        <div class="controls">
+          <button on:click={skipbackward}>Skip -10</button>
 
+          <button on:click={playpause}>Play/Pause</button>
+          <button on:click={skipforward}>Skip +30</button>
+
+        </div>
+        <div class="controls">
+          <button on:click={mute}>Mute</button>
+          <input type="range" bind:value={state.volume} min="0" max="100" />
+        </div>
+
+        <div
+          style="display: flex; flex-direction: row; justify-content:
+          space-between;">
+          <button on:click={prev}>Previous</button>
+          <button on:click={next}>Next</button>
+        </div>
+      </div>
+    {/if}
+  </div>
 </main>

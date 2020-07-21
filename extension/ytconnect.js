@@ -1,5 +1,5 @@
 const baseAPIdomain = 'https://api.youtubeconnect.ameyathakur.com';
-const controlurl = 'http://google.com/';
+const controlurl = 'https://youtubeconnect.ameyathakur.com/remote/#';
 
 injected = false; //no storage
 ytconnect_settings_open = false;
@@ -20,6 +20,24 @@ browser.storage.local.get(null).then((res) => {
     tokenState.ytconnect_enabled = res.ytconnect_enabled;
     tokenState.base64token = res.base64token;
     tokenState.tokenString = res.tokenString;
+    if (res.ytconnect_enabled) {
+      fetch(baseAPIdomain + '/get/' + tokenState.base64token)
+        .then((response) => {
+          if (response.status !== 200) {
+            disableYTconnect();
+            console.log(
+              'Looks like there was a problem. Status Code: ' + response.status
+            );
+            return;
+          }
+        })
+        .catch((err) => {
+          disableYTconnect();
+          console.log('Fetch Error : ', err);
+          return;
+        });
+    }
+
     eventsource = new EventSource(
       baseAPIdomain + '/subscribe/' + tokenState.base64token
     );
@@ -96,8 +114,7 @@ function newToken() {
       // Examine the text in the response
       response.json().then((data) => {
         tokenState.base64token = data;
-        video = document.querySelector('.video-stream');
-        pushLocalStateUpdate();
+        if (document.querySelector('.video-stream')) pushLocalStateUpdate();
 
         eventsource = new EventSource(
           baseAPIdomain + '/subscribe/' + tokenState.base64token
@@ -240,7 +257,7 @@ function detectOutsideClicks(e) {
 function pushLocalStateUpdate() {
   var video = document.querySelector('.video-stream');
   var localstate = {
-    url: baseURI,
+    url: video.baseURI,
     paused: video.paused,
     volume: video.volume * 100,
     time: -1,
@@ -248,7 +265,6 @@ function pushLocalStateUpdate() {
     mute: video.muted,
   };
 
-  console.log(localstate);
   fetch(baseAPIdomain + '/update/' + tokenState.base64token, {
     method: 'PUT',
     headers: {
@@ -288,11 +304,14 @@ function stateUpdateHandler(event) {
         clamp(state.volume, 0, 100) +
         ')'
     );
+    if (state.volume < 5) {
+      state.mute = true;
+    }
   }
-  if (state.muted) {
+  if (state.mute) {
     injectPageScript("document.getElementById('movie_player').mute()");
   } else {
-    injectPageScript("document.getElementById('movie_player').unmute()");
+    injectPageScript("document.getElementById('movie_player').unMute()");
   }
 
   switch (state.action) {
@@ -399,7 +418,7 @@ function injectYTConnect() {
     'ytconnect-remote-link ytp-menuitem'
   );
   ytconnectRemoteLink.setAttribute('role', 'menuitemlink');
-  ytconnectRemoteLink.setAttribute('href', controlurl);
+  ytconnectRemoteLink.setAttribute('href', controlurl + tokenState.base64token);
   ytconnectRemoteLink.setAttribute('target', '_blank');
   if (!tokenState.ytconnect_enabled) {
     ytconnectRemoteLink.setAttribute('style', 'display: none;');
