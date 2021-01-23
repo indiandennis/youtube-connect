@@ -1,14 +1,19 @@
 <script>
   import * as utils from "./utils.js";
+  import { onMount } from "svelte";
   const api = "https://api.youtubeconnect.ameyathakur.com";
   let connected = false;
   let state;
   let mnemonicBuffer = "";
-  let token = window.location.hash.substr(1);
+  let token = "";
   let timer;
 
+  onMount(() => {
+    updateHashToken();
+  });
+
   $: if (state) {
-    debounce(pushUpdate, 15);
+    debounce(pushUpdate, 30);
   }
 
   $: if (token !== "") {
@@ -86,7 +91,12 @@
   };
 
   const updateHashToken = () => {
-    token = window.location.hash.substr(1);
+    var temp = window.location.hash.substr(1);
+
+    if (temp.length < 16) {
+      temp += "=";
+    }
+    token = temp;
   };
 
   const playpause = () => {

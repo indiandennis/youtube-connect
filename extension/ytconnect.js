@@ -5,6 +5,14 @@ injected = false; //no storage
 ytconnect_settings_open = false;
 eventsource = null;
 
+ytconnectEnableSetting = null;
+ytconnectRemoteLink = null;
+ytconnectQRcode = null;
+ytconnectQRcodeContainer = null;
+ytconnectSettingsPanel = null;
+ytconnectTokenString = null;
+button = null;
+
 //write to storage
 tokenState = {
   ytconnect_enabled: false,
@@ -73,7 +81,11 @@ beginInjector();
 function beginInjector() {
   pageManager = document.getElementById('page-manager');
   //console.log(pageManager)
-  const config = { attributes: true, childList: true, subtree: true };
+  const config = {
+    attributes: true,
+    childList: true,
+    subtree: true,
+  };
   // Callback function to execute when mutations are observed
   const callback = function (mutationsList, observer) {
     // Use traditional 'for loops' for IE 11
@@ -97,7 +109,13 @@ function beginInjector() {
   const observer = new MutationObserver(callback);
 
   // Start observing the target node for configured mutations
-  observer.observe(pageManager, config);
+  if (!pageManager) {
+    setTimeout(() => {
+      beginInjector();
+    }, 500);
+  } else {
+    observer.observe(pageManager, config);
+  }
 }
 
 function newToken() {
@@ -187,24 +205,37 @@ function storeTokenState() {
 }
 
 function rerenderInfo() {
+  if (!injected) {
+    return;
+  }
   if (tokenState.base64token != '') {
     ytconnectQRcode.src =
       'https://chart.googleapis.com/chart?cht=qr&chs=128x128&chl=' +
-      controlurl +
-      tokenState.base64token;
+      encodeURIComponent(controlurl + tokenState.base64token);
+
     ytconnectQRcodeContainer.removeAttribute('style');
+
     ytconnectTokenString.removeAttribute('style');
-    ytconnectRemoteLink.removeAttribute('style');
+
+    ytconnectRemoteLink.setAttribute(
+      'href',
+      controlurl + tokenState.base64token
+    );
+
+    ytconnectRemoteLink.setAttribute('style', 'display: table;  width: 100%; ');
   } else {
     ytconnectQRcodeContainer.setAttribute('style', 'display: none;');
     ytconnectTokenString.setAttribute('style', 'display: none;');
-    ytconnectRemoteLink.setAttribute('style', 'display: none');
+    ytconnectRemoteLink.setAttribute(
+      'style',
+      'display: table;  width: 100%; display: none;'
+    );
   }
   ytconnectEnableSetting.setAttribute(
     'aria-checked',
     tokenState.ytconnect_enabled
   );
-  ytconnectTokenString.innerHTML = tokenState.tokenString;
+  ytconnectTokenString.innerText = tokenState.tokenString;
 }
 
 function string2Bin(str) {
@@ -264,26 +295,27 @@ function pushLocalStateUpdate() {
     action: -1,
     mute: video.muted,
   };
-
-  fetch(baseAPIdomain + '/update/' + tokenState.base64token, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(localstate),
-  })
-    .then((response) => {
-      if (response.status !== 200) {
-        console.log(
-          'Looks like there was a problem. Status Code: ' + response.status
-        );
-        return;
-      }
+  if (tokenState.base64token !== '') {
+    fetch(baseAPIdomain + '/update/' + tokenState.base64token, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(localstate),
     })
-    .catch((err) => {
-      console.log('Fetch Error : ', err);
-      return;
-    });
+      .then((response) => {
+        if (response.status !== 200) {
+          console.log(
+            'Looks like there was a problem. Status Code: ' + response.status
+          );
+          return;
+        }
+      })
+      .catch((err) => {
+        console.log('Fetch Error : ', err);
+        return;
+      });
+  }
 }
 
 function stateUpdateHandler(event) {
@@ -368,7 +400,7 @@ function injectYTConnect() {
   button.setAttribute('aria-haspopup', 'true');
 
   button.innerHTML =
-    '<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" fill="white" viewBox="0 0 36 36" ><style type="text/css">.st0{fill:none;}</style><path class="st0" d="M0,0h36v36H0V0z"/><path d="M18,11.3c-3.9,0-7,3.1-7,7h2c0-2.8,2.2-5,5-5s5,2.2,5,5h2C25,14.4,21.9,11.3,18,11.3z M19,20.6c0.9-0.4,1.5-1.3,1.5-2.3c0-1.4-1.1-2.5-2.5-2.5s-2.5,1.1-2.5,2.5c0,1,0.6,1.9,1.5,2.3v3.3l-3.4,3.4l1.4,1.4l3-3l3,3l1.4-1.4L19,23.9V20.6z M18,7.3c-6.1,0-11,4.9-11,11h2c0-5,4-9,9-9s9,4,9,9h2C29,12.2,24.1,7.3,18,7.3z"/></svg>';
+    '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" fill="white" viewBox="0 0 36 36" ><path d="M18,11.3c-3.9,0-7,3.1-7,7h2c0-2.8,2.2-5,5-5s5,2.2,5,5h2C25,14.4,21.9,11.3,18,11.3z M19,20.6c0.9-0.4,1.5-1.3,1.5-2.3c0-1.4-1.1-2.5-2.5-2.5s-2.5,1.1-2.5,2.5c0,1,0.6,1.9,1.5,2.3v3.3l-3.4,3.4l1.4,1.4l3-3l3,3l1.4-1.4L19,23.9V20.6z M18,7.3c-6.1,0-11,4.9-11,11h2c0-5,4-9,9-9s9,4,9,9h2C29,12.2,24.1,7.3,18,7.3z"/></svg>';
   parentNode = document.querySelector('.ytp-right-controls');
   button = parentNode.insertBefore(
     button,
@@ -409,19 +441,21 @@ function injectYTConnect() {
   ytconnectQRcode.src =
     'https://chart.googleapis.com/chart?cht=qr&chs=128x128&chl=' +
     controlurl +
+    '%23' +
     tokenState.base64token;
   ytconnectQRcode = ytconnectQRcodeContainer.appendChild(ytconnectQRcode);
 
   ytconnectRemoteLink = document.createElement('a');
-  ytconnectRemoteLink.setAttribute(
-    'class',
-    'ytconnect-remote-link ytp-menuitem'
-  );
-  ytconnectRemoteLink.setAttribute('role', 'menuitemlink');
+  ytconnectRemoteLink.setAttribute('class', 'ytp-menuitem');
   ytconnectRemoteLink.setAttribute('href', controlurl + tokenState.base64token);
   ytconnectRemoteLink.setAttribute('target', '_blank');
   if (!tokenState.ytconnect_enabled) {
-    ytconnectRemoteLink.setAttribute('style', 'display: none;');
+    ytconnectRemoteLink.setAttribute(
+      'style',
+      'display: table;  width: 100%; display: none;'
+    );
+  } else {
+    ytconnectRemoteLink.setAttribute('style', 'display: table;  width: 100%;');
   }
   ytconnectRemoteLink.innerHTML =
     '<div class="ytp-menuitem-icon"></div><div class="ytp-menuitem-label">Remote Application</div><div class="ytp-menuitem-content"><div class="ytp-menuitem-link"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" width="24px" height="24px"><path d="M0 0h24v24H0z" fill="none"/><path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg></div></div>';
@@ -431,7 +465,7 @@ function injectYTConnect() {
   if (!tokenState.ytconnect_enabled) {
     ytconnectTokenString.setAttribute('style', 'display: none;');
   }
-  ytconnectTokenString.innerHTML = tokenState.tokenString;
+  ytconnectTokenString.innerText = tokenState.tokenString;
 
   parentNode = document.getElementById('movie_player');
   ytconnectSettingsPanel = parentNode.insertBefore(

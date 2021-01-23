@@ -1,0 +1,29 @@
+.ytconnect-settings-panel {
+  width: 251px;
+  will-change: width, height;
+  right: 48px;
+  bottom: 49px;
+  z-index: 71;
+  padding: 8px 0;
+}
+
+.ytconnect-token-string {
+  display: table;
+  margin: 8px 24px;
+  padding: 4px 8px;
+  border-style: dashed;
+  border-width: 2px;
+  border-color: gray;
+  border-radius: 4px;
+  font-size: 100%;
+  font-weight: 700;
+  font-family: 'Roboto Mono', 'Arial Mono', monospace;
+  text-shadow: none;
+  text-align: center;
+  user-select: text;
+}
+
+.ytconnect-qrcode-container {
+  width: 100%;
+  display: table;
+}
